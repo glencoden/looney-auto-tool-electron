@@ -1,0 +1,39 @@
+body {
+    font-family: Tahoma, 'sans-serif';
+    background-color: #DD137B80;
+}
+
+h1 {
+    -webkit-user-select: none;
+    -webkit-app-region: drag;
+    text-align: center;
+    line-height: 1.5;
+    padding: 50px;
+    color: #F0EC00;
+}
+
+.logger {
+    position: relative;
+}
+
+ul {
+    list-style-type: "\1F916";
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    line-height: 1.2;
+    width: 480px;
+    height: 240px;
+    overflow: scroll;
+    padding: 24px;
+}
+
+li {
+    color: white;
+    padding-left: 12px;
+}
+
+li::selection {
+    background-color: #0C5EF0;
+}
