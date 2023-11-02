@@ -5,7 +5,7 @@ const { bindAutoToolServer } = require('./auto-tool')
 const { getLocalIP } = require('./helpers/getLocalIP')
 const requestService = require('./services/requestService')
 
-const PORT = 5544
+const PORT = 5555
 
 const runServer = (viewController) => {
     const app = express()

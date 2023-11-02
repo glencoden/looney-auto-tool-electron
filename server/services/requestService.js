@@ -1,7 +1,7 @@
 const axios = require('axios')
 
 class RequestService {
-    baseUrl = 'http://localhost:5555'//https://staging.api.looneytunez.de'
+    baseUrl = 'https://staging.api.looneytunez.de'
 
     _post(url, data) {
         return Promise.resolve()
