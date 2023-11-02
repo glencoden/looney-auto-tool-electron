@@ -1,15 +1,14 @@
 const axios = require('axios')
 
 class RequestService {
-    baseUrl = 'https://staging.api.looneytunez.de'
+    baseUrl = 'http://localhost:5555'//https://staging.api.looneytunez.de'
 
     _post(url, data) {
         return Promise.resolve()
-            .then(() => JSON.stringify(data))
-            .then(body => axios.post(url, {
+            .then(() => axios.post(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json; charset=utf-8' },
-                body,
+                data,
             }))
             .then(response => response.data)
     }

@@ -1,20 +1,46 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron')
+const path = require('node:path')
 const { runServer } = require('./server')
 
+let resolveLogger = null
+
+const loggerPromise = new Promise((resolve) => {
+    resolveLogger = resolve
+})
+
 const createWindow = () => {
-    const win = new BrowserWindow({
+    const mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+        },
         titleBarStyle: 'hidden',
         transparent: true,
     })
 
-    win.loadFile('index.html')
+    mainWindow.loadFile('index.html')
 
-    runServer()
+    resolveLogger({
+        log: (message) => {
+            mainWindow.webContents.send('log', message)
+        },
+    })
+
+    // mainWindow.webContents.openDevTools()
 }
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+    ipcMain.handle('ping', () => 'ok')
+
+    ipcMain.handle('ready', () => {
+        loggerPromise.then(runServer)
+
+        return 'ok'
+    })
+
+    createWindow()
+})
 
 app.on('window-all-closed', () => {
     app.quit()

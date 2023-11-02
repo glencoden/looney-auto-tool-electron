@@ -5,9 +5,9 @@ const { bindAutoToolServer } = require('./auto-tool')
 const { getLocalIP } = require('./helpers/getLocalIP')
 const requestService = require('./services/requestService')
 
-const PORT = 5555
+const PORT = 5544
 
-const runServer = () => {
+const runServer = (logger) => {
     const app = express()
 
     app.use(cors())
@@ -29,7 +29,7 @@ const runServer = () => {
                             console.log(response.error)
                             return
                         }
-                        console.log(response) // TODO: remove dev code
+                        logger.log(`exposed IP ${response.data} at ${new Date().toISOString()}`)
                         exposedIP = response.data
                     })
             }
@@ -40,6 +40,8 @@ const runServer = () => {
         pollIP()
     })
 
+    const clients = []
+
     const io = new Server(server, {
             cors: {
                 origin: '*',
@@ -48,11 +50,36 @@ const runServer = () => {
         },
     )
 
-    io.on('connection', (
-        // socket
-    ) => {
-        console.log('a user connected')
+    io.on('connection', (socket) => {
+        clients.push(socket)
+
+        // TODO: logger - looney tool connected at <timestamp>, num clients: <clients.length>
+
+        socket.on('disconnect', () => {
+            clients.splice(clients.indexOf(socket), 1)
+
+            // TODO: logger - looney tool disconnected at <timestamp>, num clients: <clients.length>
+        })
+
+        socket.on('latency', (latency) => {
+            console.log(`latency: ${latency}`)
+            // update UI
+        })
     })
+
+    let pollNetworkLatencyTimeoutId = 0
+
+    const pollNetworkLatency = () => {
+        clearTimeout(pollNetworkLatencyTimeoutId)
+
+        const pingTime = Date.now()
+
+        io.emit('ping', pingTime)
+
+        pollNetworkLatencyTimeoutId = setTimeout(pollNetworkLatency, 1000 * 60)
+    }
+
+    pollNetworkLatency()
 
     bindAutoToolServer(io)
 }
