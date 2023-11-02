@@ -2,10 +2,10 @@ const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('node:path')
 const { runServer } = require('./server')
 
-let resolveLogger = null
+let resolveViewController = null
 
-const loggerPromise = new Promise((resolve) => {
-    resolveLogger = resolve
+const viewControllerPromise = new Promise((resolve) => {
+    resolveViewController = resolve
 })
 
 const createWindow = () => {
@@ -21,9 +21,12 @@ const createWindow = () => {
 
     mainWindow.loadFile('index.html')
 
-    resolveLogger({
+    resolveViewController({
         log: (message) => {
             mainWindow.webContents.send('log', message)
+        },
+        updateLatency: (value) => {
+            mainWindow.webContents.send('update-latency', value)
         },
     })
 
@@ -34,7 +37,7 @@ app.whenReady().then(() => {
     ipcMain.handle('ping', () => 'ok')
 
     ipcMain.handle('ready', () => {
-        loggerPromise.then(runServer)
+        viewControllerPromise.then(runServer)
 
         return 'ok'
     })

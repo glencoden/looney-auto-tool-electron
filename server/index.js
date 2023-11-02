@@ -7,7 +7,7 @@ const requestService = require('./services/requestService')
 
 const PORT = 5544
 
-const runServer = (logger) => {
+const runServer = (viewController) => {
     const app = express()
 
     app.use(cors())
@@ -29,7 +29,7 @@ const runServer = (logger) => {
                             console.log(response.error)
                             return
                         }
-                        logger.log(`exposed IP ${response.data} at ${new Date().toISOString()}`)
+                        viewController.log(`exposed IP ${response.data}`)
                         exposedIP = response.data
                     })
             }
@@ -53,17 +53,16 @@ const runServer = (logger) => {
     io.on('connection', (socket) => {
         clients.push(socket)
 
-        // TODO: logger - looney tool connected at <timestamp>, num clients: <clients.length>
+        viewController.log(`socket connected, num clients: ${clients.length}`)
 
         socket.on('disconnect', () => {
             clients.splice(clients.indexOf(socket), 1)
 
-            // TODO: logger - looney tool disconnected at <timestamp>, num clients: <clients.length>
+            viewController.log(`socket disconnected, num clients: ${clients.length}`)
         })
 
-        socket.on('latency', (latency) => {
-            console.log(`latency: ${latency}`)
-            // update UI
+        socket.on('latency', (value) => {
+            viewController.updateLatency(Math.round(value / 10) * 10)
         })
     })
 
@@ -76,7 +75,7 @@ const runServer = (logger) => {
 
         io.emit('ping', pingTime)
 
-        pollNetworkLatencyTimeoutId = setTimeout(pollNetworkLatency, 1000 * 60)
+        pollNetworkLatencyTimeoutId = setTimeout(pollNetworkLatency, 1000 * 5)
     }
 
     pollNetworkLatency()

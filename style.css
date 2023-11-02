@@ -42,6 +42,10 @@ li {
     padding-left: 12px;
 }
 
+li > span {
+    margin-right: 24px;
+}
+
 li::selection {
     background-color: #0C5EF0;
 }

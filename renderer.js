@@ -1,12 +1,20 @@
 const latencyDisplay = document.getElementById('latency-display')
 const loggerEntries = document.getElementById('logger-entries')
 
-latencyDisplay.innerText = '42'
+const updateLatency = (value) => {
+    latencyDisplay.innerText = value
+}
 
-const addLoggerEntry = (innerText) => {
+electronAPI.onLatencyUpdate(updateLatency)
+
+const addLoggerEntry = (message) => {
     const loggerEntry = document.createElement('li')
+    const timestamp = document.createElement('span')
 
-    loggerEntry.innerText = innerText
+    loggerEntry.innerText = message
+    timestamp.innerText = new Date().toLocaleTimeString('de')
+
+    loggerEntry.prepend(timestamp)
 
     loggerEntries.appendChild(loggerEntry)
 }
