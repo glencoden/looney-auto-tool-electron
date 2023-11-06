@@ -10,9 +10,9 @@ const PORT = 5555
 //     NOTE_END: Buffer.from('int\x00,i\x00\x00\x00\x00\x00@'),
 // }
 
-const bindAutoToolServer = (io) => {
+const bindAutoToolServer = (io, viewController) => {
     server.on('error', (err) => {
-        console.log(`server error:\n${err.stack}`)
+        viewController.log(`datagram server error:\n${err.stack}`)
         server.close()
     })
 
@@ -36,9 +36,9 @@ const bindAutoToolServer = (io) => {
         } else if (keyupEvent.length === 2) {
             keyupEvent.push(msg) // redundant for now, just collect all messages
 
-            // if keydown and keyup note are different, console warn
+            // warn if keydown and keyup note are different
             if (Buffer.compare(keydownEvent[1], keyupEvent[1]) === 1) {
-                console.warn('keydown and keyup note seem to not match')
+                viewController.log('WARNING: keydown and keyup note seem to not match')
             }
 
             keydownEvent = null
@@ -46,7 +46,7 @@ const bindAutoToolServer = (io) => {
         }
     })
 
-    server.bind(PORT, () => console.log(`Datagram socket listening on port ${PORT}.`))
+    server.bind(PORT, () => viewController.log(`datagram socket listening on port ${PORT}`))
 }
 
 exports.bindAutoToolServer = bindAutoToolServer

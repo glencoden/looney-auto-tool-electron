@@ -17,6 +17,8 @@ const addLoggerEntry = (message) => {
     loggerEntry.prepend(timestamp)
 
     loggerEntries.appendChild(loggerEntry)
+
+    loggerEntries.scrollTop = loggerEntries.scrollHeight
 }
 
 electronAPI.onLog(addLoggerEntry)

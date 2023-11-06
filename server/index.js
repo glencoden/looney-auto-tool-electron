@@ -13,7 +13,7 @@ const runServer = (viewController) => {
     app.use(cors())
 
     const server = app.listen(PORT, () => {
-        console.log(`Listening on port ${PORT}.`)
+        viewController.log(`express server listening on port ${PORT}`)
 
         let exposedIP = null
 
@@ -21,12 +21,10 @@ const runServer = (viewController) => {
             const localIP = getLocalIP()
 
             if (localIP !== null && localIP !== exposedIP) {
-                console.log(`expose IP ${localIP}`)
-
                 requestService.setLooneyAPIAutoToolIP(localIP)
                     .then((response) => {
                         if (response.error !== null) {
-                            console.log(response.error)
+                            viewController.log(`error setting IP: ${response.error}`)
                             return
                         }
                         viewController.log(`exposed IP ${response.data}`)
@@ -39,6 +37,33 @@ const runServer = (viewController) => {
 
         pollIP()
     })
+
+    let networkLatency = null
+
+    let requestNetworkLatencyId = 0
+    let requestNetworkLatencyTimeoutId = 0
+
+    const pingIntervals = [ 1000, 500, 400, 300, 200, 100, 50, 25 ] // ms
+
+    let pingIterationIndex = 0
+
+    const pingLooneyTool = () => {
+        io.emit('ping', {
+            pingAt: Date.now(),
+            requestNetworkLatencyId,
+        })
+
+        pingIterationIndex++
+    }
+
+    const requestNetworkLatency = () => {
+        clearTimeout(requestNetworkLatencyTimeoutId)
+
+        networkLatency = null
+        pingIterationIndex = 0
+
+        pingLooneyTool()
+    }
 
     const clients = []
 
@@ -61,26 +86,36 @@ const runServer = (viewController) => {
             viewController.log(`socket disconnected, num clients: ${clients.length}`)
         })
 
-        socket.on('latency', (value) => {
-            viewController.updateLatency(Math.round(value / 10) * 10)
+        socket.on('latency', ({ value, requestId }) => {
+            viewController.log(`request ID: ${requestId}, ms: ${value}`)
+
+            if (requestId !== requestNetworkLatencyId) {
+                return
+            }
+
+            if (pingIterationIndex === pingIntervals.length) {
+                networkLatency /= pingIntervals.length
+
+                viewController.updateLatency(Math.round(networkLatency / 10) * 10)
+
+                requestNetworkLatencyId++
+
+                return
+            }
+
+            if (networkLatency === null) {
+                networkLatency = value
+            } else {
+                networkLatency += value
+            }
+
+            requestNetworkLatencyTimeoutId = setTimeout(pingLooneyTool, pingIntervals[pingIterationIndex])
         })
+
+        requestNetworkLatency()
     })
 
-    let pollNetworkLatencyTimeoutId = 0
-
-    const pollNetworkLatency = () => {
-        clearTimeout(pollNetworkLatencyTimeoutId)
-
-        const pingTime = Date.now()
-
-        io.emit('ping', pingTime)
-
-        pollNetworkLatencyTimeoutId = setTimeout(pollNetworkLatency, 1000 * 5)
-    }
-
-    pollNetworkLatency()
-
-    bindAutoToolServer(io)
+    bindAutoToolServer(io, viewController)
 }
 
 exports.runServer = runServer
