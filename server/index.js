@@ -24,10 +24,10 @@ const runServer = (viewController) => {
                 requestService.setLooneyAPIAutoToolIP(localIP)
                     .then((response) => {
                         if (response.error !== null) {
-                            viewController.log(`error setting IP: ${response.error}`)
+                            viewController.log(`error setting IP address: ${response.error}`)
                             return
                         }
-                        viewController.log(`exposed IP ${response.data}`)
+                        viewController.log(`exposed IP address ${response.data}`)
                         exposedIP = response.data
                     })
             }
