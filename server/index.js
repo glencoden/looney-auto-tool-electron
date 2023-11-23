@@ -1,6 +1,6 @@
 const express = require('express')
+const WebSocket = require('ws')
 const cors = require('cors')
-const { Server } = require('socket.io')
 const { bindAutoToolServer } = require('./auto-tool')
 const { getLocalIP } = require('./helpers/getLocalIP')
 const requestService = require('./services/requestService')
@@ -38,23 +38,25 @@ const runServer = (viewController) => {
         pollIP()
     })
 
+    let autoToolSocket = null
+
     let networkLatency = null
-
-    let requestNetworkLatencyId = 0
-    let requestNetworkLatencyTimeoutId = 0
-
-    const pingIntervals = [ 1000, 500, 400, 300, 200, 100, 50, 25 ] // ms
 
     let pingIterationIndex = 0
 
+    const pingIntervals = [ 1000, 500, 400, 300, 200, 100, 50, 25 ] // ms
+
     const pingLooneyTool = () => {
-        io.emit('ping', {
-            pingAt: Date.now(),
-            requestNetworkLatencyId,
-        })
+        if (autoToolSocket === null) {
+            return
+        }
+
+        autoToolSocket.send(performance.now())
 
         pingIterationIndex++
     }
+
+    let requestNetworkLatencyTimeoutId = 0
 
     const requestNetworkLatency = () => {
         clearTimeout(requestNetworkLatencyTimeoutId)
@@ -62,43 +64,29 @@ const runServer = (viewController) => {
         networkLatency = null
         pingIterationIndex = 0
 
-        pingLooneyTool()
+        requestNetworkLatencyTimeoutId = setTimeout(pingLooneyTool, 1000 * 2)
     }
 
-    const clients = []
+    const wss = new WebSocket.Server({ server })
 
-    const io = new Server(server, {
-            cors: {
-                origin: '*',
-                methods: [ 'GET', 'POST' ],
-            },
-        },
-    )
+    wss.on('connection', (socket) => {
+        autoToolSocket = socket
 
-    io.on('connection', (socket) => {
-        clients.push(socket)
+        viewController.log(`socket connected`)
 
-        viewController.log(`socket connected, num clients: ${clients.length}`)
+        socket.on('message', (data) => {
+            const prevTimestamp = parseInt(data)
 
-        socket.on('disconnect', () => {
-            clients.splice(clients.indexOf(socket), 1)
+            const value = performance.now() - prevTimestamp
 
-            viewController.log(`socket disconnected, num clients: ${clients.length}`)
-        })
-
-        socket.on('latency', ({ value, requestId }) => {
-            viewController.log(`request ID: ${requestId}, ms: ${value}`)
-
-            if (requestId !== requestNetworkLatencyId) {
-                return
-            }
+            viewController.log(`${Math.round(value)} ms latency`)
 
             if (pingIterationIndex === pingIntervals.length) {
                 networkLatency /= pingIntervals.length
 
-                viewController.updateLatency(Math.round(networkLatency / 10) * 10)
-
-                requestNetworkLatencyId++
+                if (networkLatency > 20) {
+                    viewController.updateLatency(Math.round(networkLatency / 10) * 10)
+                }
 
                 return
             }
@@ -115,7 +103,7 @@ const runServer = (viewController) => {
         requestNetworkLatency()
     })
 
-    bindAutoToolServer(io, viewController)
+    bindAutoToolServer(autoToolSocket, viewController)
 }
 
 exports.runServer = runServer

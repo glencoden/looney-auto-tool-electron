@@ -10,7 +10,7 @@ const PORT = 5555
 //     NOTE_END: Buffer.from('int\x00,i\x00\x00\x00\x00\x00@'),
 // }
 
-const bindAutoToolServer = (io, viewController) => {
+const bindAutoToolServer = (socket, viewController) => {
     server.on('error', (err) => {
         viewController.log(`datagram server error:\n${err.stack}`)
         server.close()
@@ -28,7 +28,9 @@ const bindAutoToolServer = (io, viewController) => {
             keydownEvent.push(msg)
 
             // trigger looney tool next syllable if keydown event message list is complete
-            io.emit('next')
+            socket.send(JSON.stringify({
+                name: 'next-syllable',
+            }))
         } else if (keyupEvent === null) {
             keyupEvent = [ msg ]
         } else if (keyupEvent.length === 1) {

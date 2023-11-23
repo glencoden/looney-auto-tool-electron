@@ -2,7 +2,7 @@ const latencyDisplay = document.getElementById('latency-display')
 const loggerEntries = document.getElementById('logger-entries')
 
 const updateLatency = (value) => {
-    latencyDisplay.innerText = value
+    latencyDisplay.innerText = `${value} ms`
 }
 
 electronAPI.onLatencyUpdate(updateLatency)
