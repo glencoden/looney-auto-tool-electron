@@ -28,9 +28,7 @@ const bindAutoToolServer = (socket, viewController) => {
             keydownEvent.push(msg)
 
             // trigger looney tool next syllable if keydown event message list is complete
-            socket.send(JSON.stringify({
-                name: 'next-syllable',
-            }))
+            socket.send(0)
         } else if (keyupEvent === null) {
             keyupEvent = [ msg ]
         } else if (keyupEvent.length === 1) {
