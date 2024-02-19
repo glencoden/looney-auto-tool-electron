@@ -12,6 +12,10 @@ const runServer = (viewController) => {
 
     app.use(cors())
 
+    app.get('/', (req, res) => {
+        res.send('You have reached the Looney API Auto Tool server.')
+    })
+
     const server = app.listen(PORT, () => {
         viewController.log(`express server listening on port ${PORT}`)
 
