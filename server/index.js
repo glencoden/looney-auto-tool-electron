@@ -103,10 +103,10 @@ const runServer = (viewController) => {
             requestNetworkLatencyTimeoutId = setTimeout(pingLooneyTool, pingIntervals[pingIterationIndex])
         })
 
+        void bindAutoToolServer(socket, viewController)
+
         requestNetworkLatency()
     })
-
-    bindAutoToolServer(autoToolSocket, viewController)
 }
 
 exports.runServer = runServer
