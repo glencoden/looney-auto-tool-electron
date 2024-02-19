@@ -72,7 +72,11 @@ const runServer = (viewController) => {
     wss.on('connection', (socket) => {
         autoToolSocket = socket
 
-        viewController.log(`socket connected`)
+        viewController.log('socket connected')
+
+        socket.on('close', () => {
+            viewController.log('socket disconnected')
+        })
 
         socket.on('message', (data) => {
             const prevTimestamp = parseInt(data)
@@ -84,9 +88,8 @@ const runServer = (viewController) => {
             if (pingIterationIndex === pingIntervals.length) {
                 networkLatency /= pingIntervals.length
 
-                if (networkLatency > 20) {
-                    viewController.updateLatency(Math.round(networkLatency / 10) * 10)
-                }
+                // Divide by 2 to account for only half the request way (server to client) and round by factor 10
+                viewController.updateLatency(Math.round((networkLatency / 2) / 10) * 10)
 
                 return
             }
@@ -100,10 +103,10 @@ const runServer = (viewController) => {
             requestNetworkLatencyTimeoutId = setTimeout(pingLooneyTool, pingIntervals[pingIterationIndex])
         })
 
+        void bindAutoToolServer(socket, viewController)
+
         requestNetworkLatency()
     })
-
-    bindAutoToolServer(autoToolSocket, viewController)
 }
 
 exports.runServer = runServer

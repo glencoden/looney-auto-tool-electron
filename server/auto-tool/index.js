@@ -1,7 +1,8 @@
 const dgram = require('dgram')
-const server = dgram.createSocket('udp4')
 
 const PORT = 5555
+
+let server = null
 
 // Buffer map, previously used for comparison with incoming UDP messages
 
@@ -10,7 +11,14 @@ const PORT = 5555
 //     NOTE_END: Buffer.from('int\x00,i\x00\x00\x00\x00\x00@'),
 // }
 
-const bindAutoToolServer = (socket, viewController) => {
+const bindAutoToolServer = async (socket, viewController) => {
+    if (server !== null) {
+        await server.close()
+        server = null
+    }
+
+    server = dgram.createSocket('udp4')
+
     server.on('error', (err) => {
         viewController.log(`datagram server error:\n${err.stack}`)
         server.close()
@@ -28,9 +36,7 @@ const bindAutoToolServer = (socket, viewController) => {
             keydownEvent.push(msg)
 
             // trigger looney tool next syllable if keydown event message list is complete
-            socket.send(JSON.stringify({
-                name: 'next-syllable',
-            }))
+            socket.send(0)
         } else if (keyupEvent === null) {
             keyupEvent = [ msg ]
         } else if (keyupEvent.length === 1) {
